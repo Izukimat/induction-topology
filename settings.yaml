@@ -1,0 +1,20 @@
+models:
+  - id: "pythia-410m"
+  - id: "pythia-1b"
+device: "cuda"
+dtype: "float16"
+seq_len: 256
+batch_size: 8
+seed: 123
+prompts:
+  n_sequences: 400
+  lag_values: [1, 2, 4, 8, 16, 32]
+  mix: "uniform"
+  task_types: ["ABAB", "NAMES"]
+evaluation:
+  bootstrap_resamples: 1000
+  high_score_quantile: 0.9
+  shuffle_null: true
+  head_permutation_null: true
+  causal_top_k: 3
+  causal_random_k: 3

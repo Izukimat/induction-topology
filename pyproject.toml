@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "induction-topology"
+version = "0.1.0"
+description = "Induction head topology experiments (MATS 9.0)"
+readme = "EXPERIMENT_PLAN.md"
+requires-python = ">=3.10"
+license = {text = "Proprietary"}
+authors = [{ name = "MATS9 Applicant" }]
+dependencies = [
+  "transformer-lens>=2.0.0",  # import: transformer_lens
+  "numpy>=1.24",
+  "matplotlib>=3.7",
+  "PyYAML>=6.0",
+  "einops>=0.7",
+]
+
+[project.scripts]
+induct = "src.cli:main"
+
+[tool.setuptools]
+packages = ["src"]
+package-dir = {"src" = "src"}
+

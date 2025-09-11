@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Environments
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# IDEs/Editors
+.vscode/
+.idea/
+*.code-workspace
+
+# Build / Packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Project outputs
+outputs/
+figs/
+data/
+
+# Jupyter
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Caches
+*.cache/
