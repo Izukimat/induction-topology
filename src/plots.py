@@ -45,7 +45,13 @@ def profile_curve(per_layer: List[float], out_path: str, title: str, annotate_pe
 
 
 def cross_size_overlay(
-    profile_A: List[float], profile_B: List[float], out_path: str, title: str, rel_depth: bool = True
+    profile_A: List[float],
+    profile_B: List[float],
+    out_path: str,
+    title: str,
+    rel_depth: bool = True,
+    label_A: str = "Model A",
+    label_B: str = "Model B",
 ):
     _ensure_dir(out_path)
     yA = np.array(profile_A)
@@ -59,8 +65,46 @@ def cross_size_overlay(
         xB = np.arange(len(yB))
         xlabel = "Layer index"
     plt.figure(figsize=(8, 4))
-    plt.plot(xA, yA, label="Model A", marker="o", lw=1.5)
-    plt.plot(xB, yB, label="Model B", marker="s", lw=1.5)
+    plt.plot(xA, yA, label=label_A, marker="o", lw=1.5)
+    plt.plot(xB, yB, label=label_B, marker="s", lw=1.5)
+    plt.xlabel(xlabel)
+    plt.ylabel("Layer profile")
+    plt.title(title)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=200)
+    plt.close()
+
+
+def multi_overlay(
+    curves: List[List[float]],
+    labels: List[str],
+    out_path: str,
+    title: str,
+    rel_depth: bool = True,
+):
+    """
+    Plot K>=2 per-layer curves in one overlay.
+    If rel_depth=True, x-axis is layer_index / n_layers for each curve.
+    """
+    _ensure_dir(out_path)
+    if len(curves) == 0:
+        # nothing to plot
+        return
+    plt.figure(figsize=(8, 4))
+    # Distinct markers to aid reading; cycle if needed
+    markers = ["o", "s", "^", "D", "v", "<", ">", "p", "h", "+"]
+    for i, y_list in enumerate(curves):
+        y = np.array(y_list)
+        if rel_depth:
+            x = np.arange(len(y)) / max(len(y), 1)
+            xlabel = "Relative depth (layer / n_layers)"
+        else:
+            x = np.arange(len(y))
+            xlabel = "Layer index"
+        label = labels[i] if i < len(labels) else f"Model {i+1}"
+        marker = markers[i % len(markers)]
+        plt.plot(x, y, label=label, marker=marker, lw=1.5)
     plt.xlabel(xlabel)
     plt.ylabel("Layer profile")
     plt.title(title)
@@ -106,4 +150,3 @@ def causal_bar(delta_top: float, delta_rand: float, out_path: str, title: str):
     plt.tight_layout()
     plt.savefig(out_path, dpi=200)
     plt.close()
-

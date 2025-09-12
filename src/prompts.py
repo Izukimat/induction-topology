@@ -89,9 +89,13 @@ def make_name_prompts(n: int, seq_len: int, lag_values: list[int], mix: str) -> 
     return prompts
 
 
-def find_copy_ops(token_tensor) -> list[tuple[int, int, int]]:
+def find_copy_ops(token_tensor, mode: str = "nearest") -> list[tuple[int, int, int]]:
     """
     Given tokens [B, T], return list of (b, t, s) pairs where tokens[b,t]==tokens[b,s], s<t.
+
+    mode:
+    - "nearest" (default): for each position t, include only the nearest previous match s.
+    - "all": include all previous matches s for each t (original behavior).
     """
     import torch
 
@@ -99,16 +103,57 @@ def find_copy_ops(token_tensor) -> list[tuple[int, int, int]]:
     assert toks.ndim == 2, "Expected [B, T] token tensor"
     B, T = toks.shape
     ops: list[tuple[int, int, int]] = []
+
+    if mode == "all":
+        for b in range(B):
+            seen_all: dict[int, list[int]] = {}
+            for t in range(T):
+                tok = int(toks[b, t].item())
+                if tok in seen_all:
+                    for s in seen_all[tok]:
+                        if s < t:
+                            ops.append((b, t, s))
+                    seen_all[tok].append(t)
+                else:
+                    seen_all[tok] = [t]
+        return ops
+
+    # Nearest antecedent per position
     for b in range(B):
-        seen: dict[int, list[int]] = {}
+        last_pos: dict[int, int] = {}
         for t in range(T):
             tok = int(toks[b, t].item())
-            if tok in seen:
-                for s in seen[tok]:
-                    if s < t:
-                        ops.append((b, t, s))
-                seen[tok].append(t)
-            else:
-                seen[tok] = [t]
+            if tok in last_pos:
+                s = last_pos[tok]
+                if s < t:
+                    ops.append((b, t, s))
+            last_pos[tok] = t
     return ops
 
+
+def split_copy_ops(copy_ops: list[tuple[int, int, int]], short_max: int = 8) -> tuple[list[tuple[int, int, int]], list[tuple[int, int, int]]]:
+    """
+    Split copy ops into short (lag <= short_max) and long (lag > short_max).
+    Returns (short_ops, long_ops). Empty buckets are returned as empty lists.
+    """
+    short_ops: list[tuple[int, int, int]] = []
+    long_ops: list[tuple[int, int, int]] = []
+    for (b, t, s) in copy_ops:
+        lag = int(t - s)
+        if lag <= short_max:
+            short_ops.append((b, t, s))
+        else:
+            long_ops.append((b, t, s))
+    return short_ops, long_ops
+
+
+def lag_hist(copy_ops: list[tuple[int, int, int]]) -> dict[int, int]:
+    """
+    Build a histogram mapping lag value (t - s) to count.
+    Useful for sanity-checking the lag distribution of generated prompts.
+    """
+    hist: dict[int, int] = {}
+    for (_b, t, s) in copy_ops:
+        lag = int(t - s)
+        hist[lag] = hist.get(lag, 0) + 1
+    return hist
